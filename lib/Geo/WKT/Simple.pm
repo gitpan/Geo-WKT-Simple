@@ -4,7 +4,7 @@ use warnings;
 
 use parent 'Exporter';
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 our @EXPORT;
 our %EXPORT_TAGS = (
@@ -101,7 +101,7 @@ sub wkt_parse_geometrycollection {
             last if @open == @close;
             $take .= $& if $wkt =~ s/^[^\)]*\)//;
         }
-        my ($type) = $take =~ /^($ALLTYPES)/;
+        my ($type) = $take =~ /^($ALLTYPES)/i;
         push @comps, [ uc($type) => [ wkt_parse($type => $take) ] ];
 
         $wkt =~ s/^\s*,\s*//;
@@ -114,10 +114,7 @@ sub wkt_parse {
     my ($type, $wkt) = @_;
 
     return if $type !~ /^$ALLTYPES$/i;
-    do {
-        no strict 'refs';
-        &{ 'wkt_parse_'.lc($type) }($_[1]);
-    };
+    __PACKAGE__->can('wkt_parse_'.lc($type))->($wkt);
 }
 
 sub _cat {
@@ -162,10 +159,7 @@ sub wkt_make {
     my ($type, $data) = @_;
 
     return if $type !~ /^$ALLTYPES$/i;
-    do {
-        no strict 'refs';
-        &{ 'wkt_make_'.lc($type) }(@$data);
-    };
+    __PACKAGE__->can('wkt_make_'.lc($type))->(@$data);
 }
 
 1;
@@ -197,10 +191,10 @@ Geo::WKT::Simple - Simple utils to parse/build Well Known Text(WKT) format strin
   #      [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 1, 2 ] ],
   #      [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 1, 2 ] ],
   #   )
-  wkt_make_polygon([
+  wkt_make_polygon(
       [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 1, 2 ] ],
       [ [ 1, 2 ], [ 3, 4 ], [ 5, 6 ], [ 1, 2 ] ],
-  ]) #=> 'POLYGON((1 2, 3 4, 5 6, 1 2), (1 2, 3 4, 5 6, 1 2))'
+  ); #=> 'POLYGON((1 2, 3 4, 5 6, 1 2), (1 2, 3 4, 5 6, 1 2))'
 
   # And like so on for (MULTI)LINESTRING|POLYGON
 
